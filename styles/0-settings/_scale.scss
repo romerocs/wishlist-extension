@@ -1,0 +1,65 @@
+@use 'sass:math';
+
+/**
+ * Currently using the Major Third scale.
+ * Reference: https://type-scale.com
+*/
+$ratio: 1.125;
+$base-size: 16;
+
+@function pow($number, $exponent) {
+  $value: 1;
+
+  @if $exponent > 0 {
+    @for $i from 1 through $exponent {
+      $value: $value * $number;
+    }
+  } @else if $exponent < 0 {
+    @for $i from 1 through -$exponent {
+      $value: math.div($value, $number);
+    }
+  }
+
+  @return $value;
+}
+
+@function calc-rem($px) {
+  @return math.div($px, $base-size);
+}
+
+$primitive-scale-variables: (
+  's-7': pow($ratio, -7), 
+  's-6': pow($ratio, -6), 
+  's-5': pow($ratio, -5), 
+  's-4': pow($ratio, -4), 
+  's-3': pow($ratio, -3), 
+  's-2': pow($ratio, -2),
+  's-1': pow($ratio, -1), 
+  's0': 1,            
+  's1': pow($ratio, 1),   
+  's2': pow($ratio, 2),   
+  's3': pow($ratio, 3),   
+  's4': pow($ratio, 4),   
+  's5': pow($ratio, 5),   
+  's6': pow($ratio, 6),
+  's7': pow($ratio, 7),   
+  's8': pow($ratio, 8),   
+  's9': pow($ratio, 9),   
+  's10': pow($ratio, 10),
+  's11': pow($ratio, 11),
+  's12': pow($ratio, 12),
+  's13': pow($ratio, 13),
+  's14': pow($ratio, 14),
+  's15': pow($ratio, 15),
+  's16': pow($ratio, 16),
+  's17': pow($ratio, 17),
+  's18': pow($ratio, 18),
+  's19': pow($ratio, 19),
+  's20': pow($ratio, 20),
+);
+
+$semantic-scale-variables: (
+  "vertical-rhythm": var(--s0),
+  "gutter": var(--s0),
+  "icon-gap" : 8px
+);

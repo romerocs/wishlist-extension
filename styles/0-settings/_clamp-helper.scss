@@ -1,0 +1,16 @@
+@use 'sass:math';
+
+// USAGE EXAMPLE
+// @use 'sass:map';
+// @use '../0-settings/clamp-helper' as *;
+// @use '../0-settings/scale' as *;
+
+// element {
+//   font-size: clamp(var(--s8), #{getVW(map.get($sizes, 's12'))}, var(--s12));
+// }
+
+@function getVW($font-size-max, $font-size-max-viewport: 90) {
+  $percentage: math.div($font-size-max, $font-size-max-viewport) * 100;
+
+  @return #{$percentage}vw;
+}

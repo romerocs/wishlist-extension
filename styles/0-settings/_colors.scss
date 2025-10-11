@@ -1,0 +1,40 @@
+$dark-green-h: 120;
+
+$primitive-color-variables: (
+  'white': rgb(255 255 255),
+  'black' : rgb(0 0 0),
+  'gray-h': $dark-green-h,
+  'gray-s': 5%,
+  'gray-l': 15%,
+  'gray-85': hsl(var(--gray-h) var(--gray-s) var(--gray-l)),
+  'gray-75': hsl(var(--gray-h) var(--gray-s) 25%),
+  'gray-65': hsl(var(--gray-h) var(--gray-s) 35%),
+  'gray-50': hsl(var(--gray-h) var(--gray-s) 50%),
+  'gray-35': hsl(var(--gray-h) var(--gray-s) 65%),
+  'gray-25': hsl(var(--gray-h) var(--gray-s) 75%),
+  'gray-15': hsl(var(--gray-h) var(--gray-s) 85%),
+  'gray-5': hsl(var(--gray-h) var(--gray-s) 95%),
+  'gray-3': hsl(var(--gray-h) var(--gray-s) 97%),
+  'lime-green': hsl(90 100% 40%),
+  'grass-green': hsl(101 100% 35%),
+  'hunter-green': hsl($dark-green-h 100% 25%),
+  'hotpink-70': hsl(333, 93%, 70%),
+  'hotpink-80': hsl(333, 93%, 80%),
+  'hotpink-90': hsl(333, 93%, 90%),
+  'sky-blue' : hsl(194 100% 45%),
+  'bright-pink' : hsl(349 100% 65%),
+);
+
+$semantic-color-variables: (
+  'color-text': var(--gray-65),
+  'primary-color': var(--hotpink-70),
+  'secondary-color': var(--grass-green),
+  'priority-high' : var(--bright-pink),
+  'priority-low' : var(--sky-blue),
+  'color-filled-button-text': var(--gray-75),
+  'color-filled-button-background': var(--hotpink-70),
+  'color-hollow-button-text': var(--gray-65),
+  'color-hollow-button-border': var(--gray-15),
+  'color-disabled-text' : var(--gray-50),
+  'color-disabled-background' : var(--gray-5)
+);

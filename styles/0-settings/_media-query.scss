@@ -1,0 +1,22 @@
+@use 'sass:map';
+@use 'widths' as *;
+
+@function screen-width($width) {
+  @if map.has-key($primitive-width-variables, $width) {
+    @return map.get($primitive-width-variables, $width);
+  } @else {
+    @return null;
+  }
+}
+
+@mixin mq($width, $direction: "min") {
+  @if screen-width($width) != null {
+    @media only screen and (#{$direction}-width: #{screen-width($width)}em) {
+      @content;
+    }
+  } @else {
+    @media only screen and (#{$direction}-width: #{$width}) {
+      @content;
+    }
+  }
+}

@@ -1,0 +1,76 @@
+@use './fonts' as *;
+@use './colors' as *;
+@use './scale' as *;
+@use './widths' as *;
+// @use './border-radius' as *;
+// @use './easings' as *;
+// @use './icons' as *;
+
+:root {
+  @each $property, $value in $primitive-color-variables {
+    --#{$property}: #{$value};
+  }
+
+  @each $property, $value in $semantic-color-variables {
+    --#{$property}: #{$value};
+  }
+}
+
+// :root {
+//   @each $property, $value in $primitive-font-variables {
+//     --font-#{$property}: #{$value};
+//   }
+
+//   @each $property, $value in $semantic-font-variables {
+//     --font-#{$property}: #{$value};
+//   }
+// }
+
+:root {
+  @each $property, $value in $primitive-scale-variables {
+    --#{$property}: #{$value}rem;
+  }
+
+  @each $property, $value in $semantic-scale-variables {
+    --#{$property}: #{$value};
+  }
+}
+
+// :root {
+//   @each $property, $value in $primitive-width-variables {
+//     --width-#{$property}: #{$value}rem;
+//   }
+
+//   @each $property, $value in $semantic-width-variables {
+//     --#{$property}: #{$value};
+//   }
+// }
+
+
+// :root {
+//   @each $property, $value in $icons {
+//     --icon-#{$property}: #{$value};
+//   }
+// }
+
+// :root {
+//   @each $property, $value in $primitive-border-radius-variables {
+//     --#{$property}: #{$value};
+//   }
+
+//   @each $property, $value in $semantic-border-radius-variables {
+//     --#{$property}: #{$value};
+//   }
+// }
+
+// :root {
+//   @each $property, $value in $primitive-color-variables {
+//     --#{$property}: #{$value};
+//   }
+// }
+
+// :root {
+//   @each $property, $value in $primitive-easing-variables {
+//     --#{$property}: #{$value};
+//   }
+// }

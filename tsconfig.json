@@ -6,9 +6,11 @@
   "include": [
     ".plasmo/index.d.ts",
     "./**/*.ts",
-    "./**/*.tsx"
+    "./**/*.tsx",
+    "components/Cluster/Cluster.ts"
   ],
   "compilerOptions": {
+    "strict": true,
     "paths": {
       "~*": [
         "./*"

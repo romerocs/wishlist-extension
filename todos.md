@@ -1,10 +1,3 @@
-- check if page is a product page
-  things to grab / check
-    h1
-    price
-    cost 
-    url
-
 - get google profile info
   name
   email
@@ -12,3 +5,10 @@
 
 - Update extension icon
 - Add styles 
+- add loading spinner
+- brief loading state then save data for that page to local storage
+  - if page is saved to list, prevent re-adding to site
+
+- on successful save to wishlist
+  - success message
+  - link to list
