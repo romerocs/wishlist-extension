@@ -21,6 +21,7 @@ export default class Stack extends HTMLElement {
 
   constructor() {
     super();
+    this.i = "";
 
     this.render = () => {
       this.i = `Stack-${[this.space, this.recursive].join('')}`;

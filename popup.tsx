@@ -1,5 +1,5 @@
 import type { Provider, User } from "@supabase/supabase-js"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { sendToBackground, sendToContentScript } from "@plasmohq/messaging"
 import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
@@ -8,17 +8,26 @@ import { supabase } from "~core/supabase"
 import type { Session } from "@supabase/gotrue-js/src/lib/types";
 import type { QueryData } from '@supabase/supabase-js';
 
+import Select from 'react-select';
 import TopBar from "./components/TopBar";
 import Button from "./components/Button";
+import LoadingSpinner from "./components/LoadingSpinner";
+import {
+  StyledTextInput,
+  StyledTextArea,
+  StyledSelect,
+  StyledPriceInput,
+  StyledPopupWrapper,
+  StyledItemNameURLPriceRegion,
+  StyledListItemNameH1,
+  StyledListItemNameTextArea,
+  StyledListItemURL,
+  StyledListItemNameToggleBtn
+} from "./components/Styles";
+import Toggle from "~components/Toggle";
 
 import './styles/index.scss';
-import "./components/index";
-
-interface List {
-  id: number;
-  created_at: string;
-  list_name: string;
-}
+import "./components/index"; //layout components
 
 interface ListItem {
   list_id: number;
@@ -30,6 +39,11 @@ interface ListItem {
   list_item_is_priority: boolean;
 }
 
+interface ReactSelectOption {
+  value: number;
+  label: string;
+}
+
 function WishlistPopup() {
   const [user, setUser] = useStorage<User>({
     key: "user",
@@ -38,15 +52,26 @@ function WishlistPopup() {
     })
   })
 
-  const [lists, setLists] = useState<List[]>([]);
-
+  const [lists, setLists] = useState<ReactSelectOption[]>([]);
   const [selectedList, setSelectedList] = useState<number>();
   const [itemName, setItemName] = useState<string>();
+  const [itemNameHeight, setItemNameHeight] = useState<number>(0);
   const [itemUrl, setItemUrl] = useState<string>();
   const [itemPrice, setItemPrice] = useState<number>();
   const [itemNotes, setItemNotes] = useState<string>();
+  const [itemIsPriority, setItemIsPriority] = useState<boolean>(false);
 
+  const [listItemNameEditMode, setListItemNameEditMode] = useState<boolean>(false);
   const [listItem, setListItem] = useState<ListItem | {}>({});
+  const [loadingTimer, setLoadingTimer] = useState<number>(0);
+  const [loadingTimerEnabled, setLoadingTimerEnabled] = useState<boolean>(false);
+
+  const listItemNameh1Ref = useRef<HTMLHeadingElement>(null);
+  const listItemNameTextAreaRef = useRef<HTMLTextAreaElement>(null);
+
+  const LOADING_SPINNER_INTERVAL = 250;
+  const LOADING_SPINNER_MINTIME = 1000;
+  const LOADING_SPINNER_FADEOUT = 150;
 
   useEffect(() => {
     async function init(): Promise<void> {
@@ -75,7 +100,11 @@ function WishlistPopup() {
 
           const listQuery = supabase.from("lists").select("*");
 
-          type listQueryType = QueryData<typeof listQuery>
+          type listQueryType = QueryData<typeof listQuery>;
+
+          const loadingTimerInit = loadingTimerHandler();
+
+          loadingTimerInit.start();
 
           const { data, error } = await listQuery;
 
@@ -83,9 +112,31 @@ function WishlistPopup() {
 
           const listResult: listQueryType = data;
 
-          setLists(listResult);
+          const reactSelectOptions: ReactSelectOption[] = listResult.map(list => {
+            const option: ReactSelectOption = {
+              value: list.id,
+              label: list.list_name
+            };
+
+            return option;
+          });
+
+          setLists(reactSelectOptions);
+
+          loadingTimerInit.end();
 
           const tabInfo = await retrieveTabInfo();
+
+          if (!listItemNameEditMode && listItemNameh1Ref.current !== null) {
+            window.setTimeout(() => {
+              if (listItemNameh1Ref.current !== null) {
+
+                const rect = listItemNameh1Ref.current.getBoundingClientRect();
+
+                setItemNameHeight(rect.height);
+              }
+            }, 1000);
+          }
         } else {
           console.log("user session data is null");
         }
@@ -95,13 +146,59 @@ function WishlistPopup() {
     }
 
     init()
-  }, [])
+  }, []);
 
-  function selectListHandler(e: React.ChangeEvent<HTMLSelectElement>) {
-    setSelectedList(Number(e.target.value));
+  useEffect(() => {
+    if (listItemNameEditMode && listItemNameTextAreaRef.current) {
+      const value = listItemNameTextAreaRef.current.value;
+      listItemNameTextAreaRef.current.value = "";
+      listItemNameTextAreaRef.current.focus();
+      listItemNameTextAreaRef.current.value = value;
+
+    }
+  }, [listItemNameEditMode])
+
+  function selectListHandler(selectedOption: ReactSelectOption | null) {
+    if (selectedOption) {
+      setSelectedList(selectedOption.value);
+    }
+  }
+
+  function loadingTimerHandler() {
+    let counter = 0;
+    let loadingSpinner: number;
+
+    const start = () => {
+      setLoadingTimerEnabled(true);
+
+      loadingSpinner = window.setInterval(() => {
+        counter = counter + LOADING_SPINNER_INTERVAL;
+
+        console.log(counter);
+
+        setLoadingTimer(counter);
+      }, LOADING_SPINNER_INTERVAL);
+    }
+
+    const end = () => {
+      window.setTimeout(() => {
+        setLoadingTimer(0);
+        setLoadingTimerEnabled(false);
+        clearInterval(loadingSpinner);
+      }, LOADING_SPINNER_MINTIME);
+    }
+
+    return {
+      start,
+      end
+    }
   }
 
   async function addToWishlist() {
+    const loadingTimerInit = loadingTimerHandler();
+
+    loadingTimerInit.start();
+
     const listItemDataComplete = selectedList !== undefined && itemName !== undefined && itemUrl !== undefined && itemPrice !== undefined;
 
     if (listItemDataComplete) {
@@ -112,7 +209,7 @@ function WishlistPopup() {
         list_item_price: itemPrice,
         list_item_description: itemNotes,
         list_item_is_purchased: false,
-        list_item_is_priority: false
+        list_item_is_priority: itemIsPriority
       }
 
       const insertingItem = supabase.from("list_items").insert(listItemToAdd).select();
@@ -125,12 +222,11 @@ function WishlistPopup() {
 
       const addedItem: insertingItemType = data;
 
+      loadingTimerInit.end();
+
       if (!error) {
-        //loading animation here.
         console.log('Item added:', addedItem);
       } else {
-        //output message to alert bar maybe?
-        //or log it somehow
         console.log(error);
       }
     }
@@ -160,14 +256,12 @@ function WishlistPopup() {
         }
 
         if (response) {
-          console.log('Response from page:', response);
-
           const { url, title, price } = response;
 
-          console.log(price);
-
           if (url) {
-            setItemUrl(url);
+            const urlObject = new URL(url);
+
+            setItemUrl(urlObject.host);
           }
 
           if (title) {
@@ -186,36 +280,61 @@ function WishlistPopup() {
     }
   }
 
+  const priorityToggleHandler = (isPriority: boolean) => {
+    setItemIsPriority(isPriority);
+  }
+
+  const enterListItemNameEditMode = () => {
+    if (!listItemNameEditMode) setListItemNameEditMode(true);
+  };
+
+  const exitListItemNameEditMode = (e: React.KeyboardEvent<HTMLElement>) => {
+    if (listItemNameEditMode && e.key === "Enter") setListItemNameEditMode(false);
+  }
+
   return (
-    <div style={{ width: '300px' }}>
-      <stack-l>
-        <TopBar />
+    <div style={{ position: 'relative' }}>
+      {(loadingTimerEnabled && loadingTimer < (LOADING_SPINNER_MINTIME + LOADING_SPINNER_FADEOUT)) && <LoadingSpinner showWhen={loadingTimer < LOADING_SPINNER_MINTIME} duration={LOADING_SPINNER_FADEOUT} />}
+      <StyledPopupWrapper>
 
         <stack-l>
-          <input type="text" placeholder="Item Name" value={itemName} onChange={e => setItemName(e.target.value)} />
-          <input type="url" placeholder="[INPUT ITEM URL]" value={itemUrl} onChange={e => setItemUrl(e.target.value)} />
-          <input type="number" min={1.00} onChange={e => setItemPrice(Number(e.target.value))} />
-          <textarea placeholder="[INPUT ITEM NOTES]" onChange={e => setItemNotes(e.target.value)}></textarea>
+          <TopBar />
 
-          <select name="item_priority" id="item_priority">
-            <option value="low">Low</option>
-            <option value="high">High</option>
-          </select>
+          <stack-l space="var(--s3)">
+            <Select options={lists} onChange={selectListHandler} styles={{
+              control: (baseStyles) => ({
+                ...baseStyles,
+                ...StyledSelect,
+              }),
+              indicatorSeparator: () => ({
+                display: 'none'
+              })
+            }} />
 
-          {lists.length > 0
-            &&
-            <select onChange={selectListHandler}>
-              <option>Select List</option>
-              {lists.map((list) => (
-                <option key={list.id} value={list.id}>{list.list_name}</option>
-              ))}
-            </select>
-          }
+            <Toggle handler={priorityToggleHandler} />
+
+            <StyledItemNameURLPriceRegion>
+              <div style={{ minWidth: 0 }}>
+                <stack-l>
+                  <StyledListItemNameToggleBtn onClick={enterListItemNameEditMode} onKeyDown={exitListItemNameEditMode} style={{ textBox: 'normal' } as {}}>
+                    {listItemNameEditMode ? <StyledListItemNameTextArea onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setItemName(e.target.value)} $height={itemNameHeight} defaultValue={itemName} ref={listItemNameTextAreaRef} /> : <StyledListItemNameH1 ref={listItemNameh1Ref}>{itemName}</StyledListItemNameH1>}
+                  </StyledListItemNameToggleBtn>
+                  <StyledListItemURL>{itemUrl}</StyledListItemURL>
+                </stack-l>
+              </div>
+
+              <StyledPriceInput>
+                <StyledTextInput type="number" placeholder="14.99" min={1.00} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setItemPrice(Number(e.target.value))} />
+              </StyledPriceInput>
+            </StyledItemNameURLPriceRegion>
+
+            <StyledTextArea placeholder="Description" onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setItemNotes(e.target.value)}></StyledTextArea>
+          </stack-l>
+
+          <Button callback={addToWishlist} disabled={listItem === null}>Save</Button>
         </stack-l>
-
-        <button onClick={addToWishlist} disabled={listItem === null}>[ADD TO WISHLIST BUTTON]</button>
-      </stack-l>
-    </div >
+      </StyledPopupWrapper>
+    </div>
   )
 }
 

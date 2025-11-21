@@ -10,11 +10,13 @@ $base-size: 16;
 @function pow($number, $exponent) {
   $value: 1;
 
-  @if $exponent > 0 {
+  @if $exponent >0 {
     @for $i from 1 through $exponent {
       $value: $value * $number;
     }
-  } @else if $exponent < 0 {
+  }
+
+  @else if $exponent < 0 {
     @for $i from 1 through -$exponent {
       $value: math.div($value, $number);
     }
@@ -28,23 +30,23 @@ $base-size: 16;
 }
 
 $primitive-scale-variables: (
-  's-7': pow($ratio, -7), 
-  's-6': pow($ratio, -6), 
-  's-5': pow($ratio, -5), 
-  's-4': pow($ratio, -4), 
-  's-3': pow($ratio, -3), 
+  's-7': pow($ratio, -7),
+  's-6': pow($ratio, -6),
+  's-5': pow($ratio, -5),
+  's-4': pow($ratio, -4),
+  's-3': pow($ratio, -3),
   's-2': pow($ratio, -2),
-  's-1': pow($ratio, -1), 
-  's0': 1,            
-  's1': pow($ratio, 1),   
-  's2': pow($ratio, 2),   
-  's3': pow($ratio, 3),   
-  's4': pow($ratio, 4),   
-  's5': pow($ratio, 5),   
+  's-1': pow($ratio, -1),
+  's0': 1,
+  's1': pow($ratio, 1),
+  's2': pow($ratio, 2),
+  's3': pow($ratio, 3),
+  's4': pow($ratio, 4),
+  's5': pow($ratio, 5),
   's6': pow($ratio, 6),
-  's7': pow($ratio, 7),   
-  's8': pow($ratio, 8),   
-  's9': pow($ratio, 9),   
+  's7': pow($ratio, 7),
+  's8': pow($ratio, 8),
+  's9': pow($ratio, 9),
   's10': pow($ratio, 10),
   's11': pow($ratio, 11),
   's12': pow($ratio, 12),
@@ -60,6 +62,11 @@ $primitive-scale-variables: (
 
 $semantic-scale-variables: (
   "vertical-rhythm": var(--s0),
+  "vertical-rhythm-2x": var(--s4),
   "gutter": var(--s0),
-  "icon-gap" : 8px
+  "gutter-2x": var(--s4),
+  "icon-gap" : 8px,
+  gap-action-inputs-column: var(--s0),
+  padding-inline-app-item: var(--s8),
+  padding-input: var(--s-6)
 );

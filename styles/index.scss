@@ -1,2 +1,6 @@
 @use "0-settings/custom-properties.scss";
 @use "0-settings/fonts.scss";
+
+@use "1-resets/normalize.scss";
+
+@use "2-elements/index";

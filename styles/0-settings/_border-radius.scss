@@ -1,7 +1,9 @@
 $primitive-border-radius-variables: (
-  "border-radius-12px": 12px,
+  "1x" : 4px,
+  "2x" : 8px,
+  "3x" : 16px,
 );
 
 $semantic-border-radius-variables: (
-  "border-radius-container": var(--border-radius-12px),
+  "button": var(--border-radius-1x)
 );

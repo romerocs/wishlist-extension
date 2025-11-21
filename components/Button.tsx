@@ -5,12 +5,11 @@ import type { MouseEventHandler } from '~node_modules/@types/react';
 
 type ButtonTypes = {
   children: React.ReactNode,
+  disabled: boolean,
   callback: MouseEventHandler
 }
 
-function Button({ children, callback }: ButtonTypes): React.JSX.Element {
-
-  const Button = styled.button`
+const StyledButton = styled.button`
   color: var(--gray-1);
   font-weight: 700;
   text-decoration: none;
@@ -31,11 +30,13 @@ function Button({ children, callback }: ButtonTypes): React.JSX.Element {
     hsl(79deg 100% 44%) 79%,
     hsl(78deg 100% 44%) 100%
   );
-  border-radius: var(--border-radius-2x);
+  border-radius: var(--border-radius-button);
   `;
 
+function Button({ children, disabled = false, callback }: ButtonTypes): React.JSX.Element {
+
   return (
-    <Button onClick={callback}>{children}</Button>
+    <StyledButton onClick={callback} disabled={disabled}>{children}</StyledButton>
   );
 }
 
