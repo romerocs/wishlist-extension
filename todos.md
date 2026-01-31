@@ -51,3 +51,6 @@ title and price ui:
 - on enter key:
   - exit edit mode
   - update the height of the text area element to match the new text value
+
+
+ADD ABILITY TO CREATE 'PRIVATE' list items

@@ -1,22 +1,17 @@
 
 
 import styled from 'styled-components'
-import type { MouseEventHandler } from '~node_modules/@types/react';
 
-type ButtonTypes = {
-  children: React.ReactNode,
-  disabled: boolean,
-  callback: MouseEventHandler
-}
-
-const StyledButton = styled.button`
+const StyledButton = styled.button<{ $disabled?: boolean, $saved?: boolean }>`
   color: var(--gray-1);
   font-weight: 700;
   text-decoration: none;
   text-align: center;
   display: inline-block;
   width: var(--btn-width, auto);
-  padding: var(--s-1) var(--s0);
+  padding: 0 var(--s0);
+  height: 36px;
+  position: relative;
   background: linear-gradient(
     90deg,
     hsl(90deg 100% 44%) 0%,
@@ -31,13 +26,17 @@ const StyledButton = styled.button`
     hsl(78deg 100% 44%) 100%
   );
   border-radius: var(--border-radius-button);
-  `;
 
-function Button({ children, disabled = false, callback }: ButtonTypes): React.JSX.Element {
+  ${props => props.$disabled && `
+    background: var(--gray-15);
+    pointer-events: none;
+  `}
 
-  return (
-    <StyledButton onClick={callback} disabled={disabled}>{children}</StyledButton>
-  );
-}
+  ${props => props.$saved && `
+    pointer-events: none;
+  `}
 
-export default Button;
+`;
+
+
+export default StyledButton;

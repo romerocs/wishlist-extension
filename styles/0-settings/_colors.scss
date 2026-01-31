@@ -15,7 +15,7 @@ $primitive-color-variables: (
   'gray-15': hsl(var(--gray-h) var(--gray-s) 85%),
   'gray-5': hsl(var(--gray-h) var(--gray-s) 95%),
   'gray-3': hsl(var(--gray-h) var(--gray-s) 97%),
-  'lime-green': hsl(90 100% 40%),
+  'lime-green': hsl(90, 100%, 40%),
   'grass-green': hsl(101 100% 35%),
   'hunter-green': hsl($dark-green-h 100% 25%),
   'hotpink-70': hsl(333, 93%, 70%),

@@ -1,4 +1,6 @@
 import type { Provider, User } from "@supabase/supabase-js"
+import * as React from "react";
+import { Dialog } from "radix-ui";
 import { useEffect, useState, useRef } from "react"
 import { sendToBackground, sendToContentScript } from "@plasmohq/messaging"
 import { Storage } from "@plasmohq/storage"
@@ -11,23 +13,34 @@ import type { QueryData } from '@supabase/supabase-js';
 import Select from 'react-select';
 import TopBar from "./components/TopBar";
 import Button from "./components/Button";
-import LoadingSpinner from "./components/LoadingSpinner";
+import LoadingScreen from "./components/LoadingScreen";
+import LoadingSpinner from "~components/LoadingSpinner";
+import Toggle from "~components/Toggle";
+import DialogUpdateItemName from "./components/DialogUpdateItemName";
+import { SaveText } from "~components/SaveText";
+
+import {
+  StyledPriceInput,
+  StyledItemNameURLPriceRegion,
+  StyledListItemNameH1,
+  StyledListItemURL,
+  StyledListItemNameToggleBtn
+} from "./components/ListItemElements";
+
 import {
   StyledTextInput,
   StyledTextArea,
-  StyledSelect,
-  StyledPriceInput,
+  StyledSelect
+} from "./components/FormElements";
+
+
+import {
   StyledPopupWrapper,
-  StyledItemNameURLPriceRegion,
-  StyledListItemNameH1,
-  StyledListItemNameTextArea,
-  StyledListItemURL,
-  StyledListItemNameToggleBtn
-} from "./components/Styles";
-import Toggle from "~components/Toggle";
+} from "./components/Popup";
 
 import './styles/index.scss';
 import "./components/index"; //layout components
+import type { UrlObject } from "url";
 
 interface ListItem {
   list_id: number;
@@ -55,16 +68,17 @@ function WishlistPopup() {
   const [lists, setLists] = useState<ReactSelectOption[]>([]);
   const [selectedList, setSelectedList] = useState<number>();
   const [itemName, setItemName] = useState<string>();
-  const [itemNameHeight, setItemNameHeight] = useState<number>(0);
-  const [itemUrl, setItemUrl] = useState<string>();
-  const [itemPrice, setItemPrice] = useState<number>();
+  const [itemUrl, setItemUrl] = useState<string | undefined>("");
+  const [itemUrlHost, setItemUrlHost] = useState<string | undefined>("");
+  const [itemPrice, setItemPrice] = useState<number>(0);
   const [itemNotes, setItemNotes] = useState<string>();
   const [itemIsPriority, setItemIsPriority] = useState<boolean>(false);
-
+  const [listItemDataComplete, setListItemDataComplete] = useState<boolean>(false);
   const [listItemNameEditMode, setListItemNameEditMode] = useState<boolean>(false);
-  const [listItem, setListItem] = useState<ListItem | {}>({});
   const [loadingTimer, setLoadingTimer] = useState<number>(0);
-  const [loadingTimerEnabled, setLoadingTimerEnabled] = useState<boolean>(false);
+  const [loadingScreenTimerEnabled, setLoadingScreenTimerEnabled] = useState<boolean>(false);
+  const [submitTimerEnabled, setSubmitTimerEnabled] = useState<boolean>(false);
+  const [itemSuccessfullyAdded, setItemSuccessfullyAdded] = useState<boolean>(false);
 
   const listItemNameh1Ref = useRef<HTMLHeadingElement>(null);
   const listItemNameTextAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -102,7 +116,7 @@ function WishlistPopup() {
 
           type listQueryType = QueryData<typeof listQuery>;
 
-          const loadingTimerInit = loadingTimerHandler();
+          const loadingTimerInit = loadingTimerHandler(setLoadingScreenTimerEnabled);
 
           loadingTimerInit.start();
 
@@ -126,17 +140,6 @@ function WishlistPopup() {
           loadingTimerInit.end();
 
           const tabInfo = await retrieveTabInfo();
-
-          if (!listItemNameEditMode && listItemNameh1Ref.current !== null) {
-            window.setTimeout(() => {
-              if (listItemNameh1Ref.current !== null) {
-
-                const rect = listItemNameh1Ref.current.getBoundingClientRect();
-
-                setItemNameHeight(rect.height);
-              }
-            }, 1000);
-          }
         } else {
           console.log("user session data is null");
         }
@@ -156,7 +159,12 @@ function WishlistPopup() {
       listItemNameTextAreaRef.current.value = value;
 
     }
-  }, [listItemNameEditMode])
+  }, [listItemNameEditMode]);
+
+
+  useEffect(() => {
+    setListItemDataComplete(selectedList !== undefined && itemName !== undefined && itemUrl !== undefined && itemPrice > 0);
+  }, [selectedList, itemName, itemUrl, itemPrice]);
 
   function selectListHandler(selectedOption: ReactSelectOption | null) {
     if (selectedOption) {
@@ -164,17 +172,15 @@ function WishlistPopup() {
     }
   }
 
-  function loadingTimerHandler() {
+  function loadingTimerHandler(stateHandler: React.Dispatch<React.SetStateAction<boolean>>) {
     let counter = 0;
     let loadingSpinner: number;
 
     const start = () => {
-      setLoadingTimerEnabled(true);
+      stateHandler(true);
 
       loadingSpinner = window.setInterval(() => {
         counter = counter + LOADING_SPINNER_INTERVAL;
-
-        console.log(counter);
 
         setLoadingTimer(counter);
       }, LOADING_SPINNER_INTERVAL);
@@ -183,7 +189,7 @@ function WishlistPopup() {
     const end = () => {
       window.setTimeout(() => {
         setLoadingTimer(0);
-        setLoadingTimerEnabled(false);
+        stateHandler(false);
         clearInterval(loadingSpinner);
       }, LOADING_SPINNER_MINTIME);
     }
@@ -195,7 +201,7 @@ function WishlistPopup() {
   }
 
   async function addToWishlist() {
-    const loadingTimerInit = loadingTimerHandler();
+    const loadingTimerInit = loadingTimerHandler(setSubmitTimerEnabled);
 
     loadingTimerInit.start();
 
@@ -225,7 +231,7 @@ function WishlistPopup() {
       loadingTimerInit.end();
 
       if (!error) {
-        console.log('Item added:', addedItem);
+        setItemSuccessfullyAdded(true);
       } else {
         console.log(error);
       }
@@ -256,12 +262,17 @@ function WishlistPopup() {
         }
 
         if (response) {
-          const { url, title, price } = response;
+          const { url, title, price, schema } = response;
+
+          console.log(schema);
 
           if (url) {
             const urlObject = new URL(url);
 
-            setItemUrl(urlObject.host);
+            if (urlObject.href && urlObject.host) {
+              setItemUrl(urlObject.href);
+              setItemUrlHost(urlObject.host);
+            }
           }
 
           if (title) {
@@ -293,47 +304,61 @@ function WishlistPopup() {
   }
 
   return (
-    <div style={{ position: 'relative' }}>
-      {(loadingTimerEnabled && loadingTimer < (LOADING_SPINNER_MINTIME + LOADING_SPINNER_FADEOUT)) && <LoadingSpinner showWhen={loadingTimer < LOADING_SPINNER_MINTIME} duration={LOADING_SPINNER_FADEOUT} />}
-      <StyledPopupWrapper>
+    <div style={{ position: 'relative', height: '450px', overflow: 'hidden' }}>
+      {(loadingScreenTimerEnabled && loadingTimer < (LOADING_SPINNER_MINTIME + LOADING_SPINNER_FADEOUT)) && <LoadingScreen showWhen={loadingTimer < LOADING_SPINNER_MINTIME} duration={LOADING_SPINNER_FADEOUT} />}
+      <Dialog.Root>
+        <StyledPopupWrapper>
 
-        <stack-l>
-          <TopBar />
+          <stack-l>
+            <TopBar />
 
-          <stack-l space="var(--s3)">
-            <Select options={lists} onChange={selectListHandler} styles={{
-              control: (baseStyles) => ({
-                ...baseStyles,
-                ...StyledSelect,
-              }),
-              indicatorSeparator: () => ({
-                display: 'none'
-              })
-            }} />
+            <stack-l space="var(--s3)">
+              <Select options={lists} onChange={selectListHandler} styles={{
+                control: (baseStyles) => ({
+                  ...baseStyles,
+                  ...StyledSelect,
+                }),
+                indicatorSeparator: () => ({
+                  display: 'none'
+                }),
+                singleValue: (baseStyles) => ({
+                  ...baseStyles,
+                  overflow: 'visible',
+                })
+              }} />
 
-            <Toggle handler={priorityToggleHandler} />
+              <Toggle handler={priorityToggleHandler} />
 
-            <StyledItemNameURLPriceRegion>
-              <div style={{ minWidth: 0 }}>
-                <stack-l>
-                  <StyledListItemNameToggleBtn onClick={enterListItemNameEditMode} onKeyDown={exitListItemNameEditMode} style={{ textBox: 'normal' } as {}}>
-                    {listItemNameEditMode ? <StyledListItemNameTextArea onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setItemName(e.target.value)} $height={itemNameHeight} defaultValue={itemName} ref={listItemNameTextAreaRef} /> : <StyledListItemNameH1 ref={listItemNameh1Ref}>{itemName}</StyledListItemNameH1>}
-                  </StyledListItemNameToggleBtn>
-                  <StyledListItemURL>{itemUrl}</StyledListItemURL>
-                </stack-l>
-              </div>
+              <StyledItemNameURLPriceRegion>
+                <div style={{ minWidth: 0 }}>
+                  <stack-l>
+                    <Dialog.Trigger asChild>
+                      <StyledListItemNameToggleBtn onClick={enterListItemNameEditMode} onKeyDown={exitListItemNameEditMode} style={{ textBox: 'normal' } as {}}>
+                        <StyledListItemNameH1 ref={listItemNameh1Ref}>{itemName}</StyledListItemNameH1>
+                      </StyledListItemNameToggleBtn>
+                    </Dialog.Trigger>
+                    <StyledListItemURL>{itemUrlHost}</StyledListItemURL>
+                  </stack-l>
+                </div>
 
-              <StyledPriceInput>
-                <StyledTextInput type="number" placeholder="14.99" min={1.00} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setItemPrice(Number(e.target.value))} />
-              </StyledPriceInput>
-            </StyledItemNameURLPriceRegion>
+                <StyledPriceInput>
+                  <StyledTextInput type="number" placeholder="14.99" min={1.00} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setItemPrice(Number(e.target.value))} />
+                </StyledPriceInput>
+              </StyledItemNameURLPriceRegion>
 
-            <StyledTextArea placeholder="Description" onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setItemNotes(e.target.value)}></StyledTextArea>
+              <StyledTextArea placeholder="Description" onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setItemNotes(e.target.value)}></StyledTextArea>
+            </stack-l>
+
+            <Button onClick={addToWishlist} $disabled={!listItemDataComplete} $saved={itemSuccessfullyAdded}>
+              {(submitTimerEnabled && loadingTimer < (LOADING_SPINNER_MINTIME + LOADING_SPINNER_FADEOUT)) ? <LoadingSpinner size={25} /> : <SaveText saved={itemSuccessfullyAdded} shoudFadeIn={!submitTimerEnabled} />}
+            </Button>
           </stack-l>
+        </StyledPopupWrapper>
 
-          <Button callback={addToWishlist} disabled={listItem === null}>Save</Button>
-        </stack-l>
-      </StyledPopupWrapper>
+        <Dialog.Portal>
+          <DialogUpdateItemName itemName={itemName} setItemName={setItemName} />
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   )
 }

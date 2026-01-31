@@ -4,6 +4,7 @@ interface TabInfo {
   url: string;
   title: string;
   price: RegExpMatchArray | null;
+  schema: object
 }
 
 // Content script to extract H1 tag content from the page
@@ -17,10 +18,30 @@ interface TabInfo {
     const searchString = /\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})?/;
     const price = htmlContent.match(searchString);
 
+    const jsonTag: HTMLScriptElement | null = document.querySelector('script[type="application/ld+json"]');
+    const hasJSONTag = !!jsonTag;
+    let schema = {};
+
+    if (hasJSONTag) {
+      const jsonRaw = jsonTag.textContent;
+      const jsonParsed = JSON.parse(jsonRaw);
+      const hasContext = jsonParsed.hasOwnProperty("@context");
+
+      if (hasContext) {
+        const regex = /schema\.org/;
+        const isSchema = !!jsonParsed["@context"].match(regex);
+
+        if (isSchema) {
+          schema = jsonParsed;
+        }
+      }
+    }
+
     return {
       url,
       title,
-      price
+      price,
+      schema
     }
   }
 
