@@ -7,8 +7,16 @@ import { useStorage } from "@plasmohq/storage/hook"
 
 import { supabase } from "~core/supabase"
 
+import './styles/index.scss';
+import "./components/index"; //layout components
+
+import OptionsWrapper from "~components/OptionsWrapper"
+import OptionsPane from "~components/OptionsPane"
+import Button from "~components/Button"
+import Logo from "~components/Logo"
+
 function IndexOptions() {
-  const [user, setUser] = useStorage<User>({
+  const [user, setUser] = useStorage<User | null>({
     key: "user",
     instance: new Storage({
       area: "local"
@@ -25,6 +33,8 @@ function IndexOptions() {
       }
       if (!!data.session) {
         setUser(data.session.user)
+
+        console.log(user);
         sendToBackground({
           name: "init-session",
           body: {
@@ -49,50 +59,38 @@ function IndexOptions() {
   }
 
   return (
-    <main
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        width: "100%",
-        top: 240,
-        position: "relative"
-      }}>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          width: 240,
-          justifyContent: "space-between",
-          gap: 4.2
-        }}>
+    <OptionsWrapper>
+      <OptionsPane>
         {user && (
-          <>
-            <h3>
-              {user.email} - {user.id}
-            </h3>
+          <stack-l justify="center" style={{ textAlign: 'center' }}>
+            <Logo width={175} />
+            <div style={{ borderTop: '1px solid var(--gray-15)', paddingTop: 'var(--s0)' }}>Signed in as</div>
+            <h2>
+              {user.user_metadata.full_name}
+            </h2>
 
-            <button
+            <Button
               onClick={() => {
                 supabase.auth.signOut()
                 setUser(null)
               }}>
               Logout
-            </button>
-          </>
+            </Button>
+          </stack-l>
         )}
         {!user && (
-          <>
-            <button
+          <stack-l>
+            <Logo width={175} />
+            <Button
               onClick={(e) => {
                 handleOAuthLogin("google")
               }}>
-              Sign in with Google
-            </button>
-          </>
+              Sign in
+            </Button>
+          </stack-l>
         )}
-      </div>
-    </main>
+      </OptionsPane>
+    </OptionsWrapper>
   )
 }
 
